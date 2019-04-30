@@ -8,9 +8,11 @@ import "./styles.css";
 class App extends React.Component {
     videoRef = React.createRef();
     canvasRef = React.createRef();
-    state = {info: 'loading model, please wait...'};
+    state = {info: 'loading model, please wait...', fps: 0};
     stop = false;
     front = true;
+    time = Date.now();
+    frames = 0;
 
     constructor(props) {
         super(props);
@@ -24,11 +26,9 @@ class App extends React.Component {
         } else {
             this.idealHeight = 720;
             this.idealWidth = 1280;
-            this.canvasWidth = window.innerHeight / 3 * 4;
+            this.canvasWidth = window.innerHeight / 9 * 16;
             this.canvasHeight = window.innerHeight;
         }
-
-
     }
 
     componentDidMount() {
@@ -77,6 +77,12 @@ class App extends React.Component {
     detectFrame = (video, model) => {
         if (this.stop)
             return;
+        if (Date.now() - this.time >= 1000) {
+            this.setState({fps: this.frames});
+            this.frames = 0;
+            this.time = Date.now();
+        }
+        this.frames++;
         model.detect(video).then(predictions => {
             this.renderPredictions(predictions);
             requestAnimationFrame(() => {
@@ -154,6 +160,7 @@ class App extends React.Component {
                         height: this.canvasHeight
                     }}
                 />
+                <h4 style={{display: 'absolute', top: 0, left: 0, color: '#aaa'}}>{this.state.fps}</h4>
                 <button style={{position: 'absolute', top: window.innerHeight - 60, height: 40}}
                         type="button" onClick={this.switchCamera}>Switch Camera
                 </button>
