@@ -8,14 +8,31 @@ import "./styles.css";
 class App extends React.Component {
     videoRef = React.createRef();
     canvasRef = React.createRef();
-    state = {info: 'loading...'};
+    state = {info: 'loading model, please wait...'};
+    stop = false;
+    front = true;
+
+    constructor(props) {
+        super(props);
+    }
 
     componentDidMount() {
+        cocoSsd.load().then(model => {
+            this.model = model;
+            this.start();
+        });
+    }
+
+    start() {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            const webCamPromise = navigator.mediaDevices
+            navigator.mediaDevices
                 .getUserMedia({
                     audio: false,
-                    video: { width: 1280, height: 720 }
+                    video: {
+                        facingMode: this.front ? "user" : "environment",
+                        width: {ideal: 1920},
+                        height: {ideal: 1440},
+                    }
                 })
                 .then(stream => {
                     this.setState({info: 'success get stream'});
@@ -26,21 +43,21 @@ class App extends React.Component {
                             resolve();
                         };
                     });
-                });
-            const modelPromise = cocoSsd.load();
-            Promise.all([modelPromise, webCamPromise])
-                .then(values => {
-                    this.setState({info: 'success'});
-                    this.detectFrame(this.videoRef.current, values[0]);
+                })
+                .then(() => {
+                    this.stop = false;
+                    this.detectFrame(this.videoRef.current, this.model);
                 })
                 .catch(error => {
                     this.setState({info: error.message});
-                    console.error(error.message);
+                    console.log(error.message);
                 });
         }
     }
 
     detectFrame = (video, model) => {
+        if (this.stop)
+            return;
         model.detect(video).then(predictions => {
             this.renderPredictions(predictions);
             requestAnimationFrame(() => {
@@ -81,25 +98,40 @@ class App extends React.Component {
         });
     };
 
+    switchCamera = () => {
+        this.stop = true;
+        if (window.stream) {
+            window.stream.getTracks().forEach(t => {
+                t.stop();
+            })
+        }
+        this.front = ! this.front;
+        console.log(this.front);
+        this.start();
+    };
+
     render() {
         return (
             <div>
-                <h4>{this.state.info}</h4>
+                <h4 style={{display: this.state.info.length ? 'show' : 'none'}}>{this.state.info}</h4>
                 <video
                     className="size"
                     autoPlay
                     playsInline
                     muted
                     ref={this.videoRef}
-                    width="600"
-                    height="500"
+                    width={window.innerWidth}
+                    height={window.innerWidth / 3 * 4}
                 />
                 <canvas
                     className="size"
                     ref={this.canvasRef}
-                    width="600"
-                    height="500"
+                    width={window.innerWidth}
+                    height={window.innerWidth / 3 * 4}
                 />
+                <button style={{position: 'fixed', top: window.innerWidth / 3 * 4, height: 40}}
+                        type="button" onClick={this.switchCamera}>Switch Camera
+                </button>
             </div>
         );
     }

@@ -12,10 +12,12 @@
     "react-magic-dropzone": "1.0.1",
     "react-scripts": "2.0.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "cross-env": "^5.2.0"
+  },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "cross-env PUBLIC_URL=https://lesterlyu.com react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
