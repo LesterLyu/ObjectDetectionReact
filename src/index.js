@@ -14,6 +14,20 @@ class App extends React.Component {
 
     constructor(props) {
         super(props);
+        // calculate appropriate camera size
+        if (window.innerHeight > window.innerWidth) {
+            // landscape mode
+            this.idealHeight = 960;
+            this.idealWidth = 1280;
+            this.canvasWidth = window.innerWidth;
+            this.canvasHeight = window.innerWidth / 3 * 4;
+        } else {
+            this.idealHeight = 720;
+            this.idealWidth = 1280;
+            this.canvasWidth = window.innerHeight / 3 * 4;
+            this.canvasHeight = window.innerHeight;
+        }
+
     }
 
     componentDidMount() {
@@ -30,11 +44,12 @@ class App extends React.Component {
                     audio: false,
                     video: {
                         facingMode: this.front ? "user" : "environment",
-                        width: {ideal: 1920},
-                        height: {ideal: 1440},
+                        width: {ideal: this.idealWidth},
+                        height: {ideal: this.idealHeight},
                     }
                 })
                 .then(stream => {
+                    console.log(stream);
                     this.setState({info: 'success get stream'});
                     window.stream = stream;
                     this.videoRef.current.srcObject = stream;
@@ -84,7 +99,7 @@ class App extends React.Component {
             ctx.strokeRect(x, y, width, height);
             // Draw the label background.
             ctx.fillStyle = "#00FFFF";
-            const textWidth = ctx.measureText(prediction.class).width;
+            const textWidth = ctx.measureText(prediction.class + ' 99.99%').width;
             const textHeight = parseInt(font, 10); // base 10
             ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
         });
@@ -94,7 +109,7 @@ class App extends React.Component {
             const y = prediction.bbox[1];
             // Draw the text last to ensure it's on top.
             ctx.fillStyle = "#000000";
-            ctx.fillText(prediction.class, x, y);
+            ctx.fillText(prediction.class + ' ' + (prediction.score * 100).toPrecision(4) + '%', x, y);
         });
     };
 
@@ -105,7 +120,7 @@ class App extends React.Component {
                 t.stop();
             })
         }
-        this.front = ! this.front;
+        this.front = !this.front;
         console.log(this.front);
         this.start();
     };
@@ -120,16 +135,16 @@ class App extends React.Component {
                     playsInline
                     muted
                     ref={this.videoRef}
-                    width={window.innerWidth}
-                    height={window.innerWidth / 3 * 4}
+                    width={this.canvasWidth}
+                    height={this.canvasHeight}
                 />
                 <canvas
                     className="size"
                     ref={this.canvasRef}
-                    width={window.innerWidth}
-                    height={window.innerWidth / 3 * 4}
+                    width={this.canvasWidth}
+                    height={this.canvasHeight}
                 />
-                <button style={{position: 'fixed', top: window.innerWidth / 3 * 4, height: 40}}
+                <button style={{position: 'absolute', top: window.innerHeight - 60, height: 40}}
                         type="button" onClick={this.switchCamera}>Switch Camera
                 </button>
             </div>
