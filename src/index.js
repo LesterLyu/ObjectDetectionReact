@@ -28,6 +28,7 @@ class App extends React.Component {
             this.canvasHeight = window.innerHeight;
         }
 
+
     }
 
     componentDidMount() {
@@ -35,6 +36,8 @@ class App extends React.Component {
             this.model = model;
             this.start();
         });
+        const ctx = this.canvasRef.current.getContext("2d");
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     }
 
     start() {
@@ -61,6 +64,7 @@ class App extends React.Component {
                 })
                 .then(() => {
                     this.stop = false;
+                    this.setState({info: ''});
                     this.detectFrame(this.videoRef.current, this.model);
                 })
                 .catch(error => {
@@ -86,8 +90,10 @@ class App extends React.Component {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         // Font options.
         const font = "16px sans-serif";
+
         ctx.font = font;
         ctx.textBaseline = "top";
+        ctx.globalAlpha = 0.7;
         predictions.forEach(prediction => {
             const x = prediction.bbox[0];
             const y = prediction.bbox[1];
@@ -95,13 +101,13 @@ class App extends React.Component {
             const height = prediction.bbox[3];
             // Draw the bounding box.
             ctx.strokeStyle = "#00FFFF";
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 2;
             ctx.strokeRect(x, y, width, height);
             // Draw the label background.
             ctx.fillStyle = "#00FFFF";
-            const textWidth = ctx.measureText(prediction.class + ' 99.99%').width;
+            const textWidth = ctx.measureText(prediction.class + ' 99%').width;
             const textHeight = parseInt(font, 10); // base 10
-            ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
+            ctx.fillRect(x + 1, y + 1, textWidth + 2, textHeight + 2);
         });
 
         predictions.forEach(prediction => {
@@ -109,7 +115,7 @@ class App extends React.Component {
             const y = prediction.bbox[1];
             // Draw the text last to ensure it's on top.
             ctx.fillStyle = "#000000";
-            ctx.fillText(prediction.class + ' ' + (prediction.score * 100).toPrecision(4) + '%', x, y);
+            ctx.fillText(prediction.class + ' ' + (prediction.score * 100).toPrecision(2) + '%', x + 1, y + 1);
         });
     };
 
@@ -141,8 +147,12 @@ class App extends React.Component {
                 <canvas
                     className="size"
                     ref={this.canvasRef}
-                    width={this.canvasWidth}
-                    height={this.canvasHeight}
+                    width={window.devicePixelRatio * this.canvasWidth}
+                    height={window.devicePixelRatio * this.canvasHeight}
+                    style={{
+                        width: this.canvasWidth,
+                        height: this.canvasHeight
+                    }}
                 />
                 <button style={{position: 'absolute', top: window.innerHeight - 60, height: 40}}
                         type="button" onClick={this.switchCamera}>Switch Camera
